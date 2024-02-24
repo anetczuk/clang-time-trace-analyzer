@@ -13,16 +13,16 @@ To run application execute `python3 -m ctta --help` to receive [cmd help](doc/cm
 
 To instrument *clang* to generate time trace files you have to pass `-ftime-trace` flag to the compiler. It can be 
 achieved by following steps:
-- through *CMake*: add following line in *CMakeLists.txt*: `set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftime-trace")`
-- through *make*: add following parameter during execution: `CXXFLAGS="-ftime-trace"`
+- through *CMakeLists.txt*: `set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftime-trace")`
+- through *cmake* cmd line: `cmake -DCMAKE_CXX_FLAGS="-ftime-trace" .`
 
 
 ## Installation
 
 Installation of package can be done by:
- - to install package from downloaded ZIP file execute: `pip3 install --user file:clang-time-trace-analyzer-master.zip#subdirectory=src`
- - to install package directly from GitHub execute: `pip3 install --user git+https://github.com/anetczuk/clang-time-trace-analyzer.git#subdirectory=src`
- - uninstall: `pip3 uninstall --user ctta`
+ - to install package from downloaded ZIP file execute: `pip3 install --user -I file:clang-time-trace-analyzer-master.zip#subdirectory=src`
+ - to install package directly from GitHub execute: `pip3 install --user -I git+https://github.com/anetczuk/clang-time-trace-analyzer.git#subdirectory=src`
+ - uninstall: `pip3 uninstall ctta`
 
 Installation For development:
  - `install-deps.sh` to install package dependencies only (`requirements.txt`)
