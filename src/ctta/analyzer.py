@@ -27,6 +27,8 @@ def analyze(files_list, exclude_list):
         try:
             with open(data_path, encoding="utf-8") as data_file:
                 dict_data = json.load(data_file)
+                if not isinstance(dict_data, dict):
+                    continue
                 events_list = dict_data.get("traceEvents")
                 if not events_list:
                     continue
