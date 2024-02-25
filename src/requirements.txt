@@ -1,1 +1,2 @@
 pyyaml
+flameprof==0.4

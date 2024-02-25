@@ -17,7 +17,7 @@ import pprint
 
 from glob import glob
 
-from ctta.analyzer import analyze
+from ctta.analyzer import analyze, draw_flame_svg
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +33,9 @@ def analyze_code(files_list, exclude_list, out_file_path):
     with open(out_file_path, "w", encoding="utf-8") as out_file:
         pprint.pprint(data_dict, out_file, indent=4, sort_dicts=False)
 
+    out_svg_path = f"{out_file_path}.svg"
+    draw_flame_svg(files_list, out_svg_path)
+
 
 def find_files(files, dirs):
     ret_list = set()
@@ -42,6 +45,7 @@ def find_files(files, dirs):
         for found_json in glob(f"{dir_item}/**/*.json", recursive=True):
             ret_list.add(found_json)
 
+    ret_list = sorted(ret_list)
     return ret_list
 
 
