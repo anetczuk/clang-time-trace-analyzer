@@ -118,10 +118,10 @@ class ExcludeItemFilter:
 # =============================================================================
 
 
-def draw_flame_svg(files_list, out_svg_path):
-    _LOGGER.info("drawing flamegraph view")
-    data_file = files_list[0]
-    blocks, bblocks = read_flame_blocks(data_file)
+def draw_flame_svg(file_path, out_svg_path):
+    blocks, bblocks = read_flame_blocks(file_path)
+    if not blocks and not bblocks:
+        return
     render_flamegraph(blocks, bblocks, out_svg_path)
 
 
