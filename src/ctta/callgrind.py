@@ -32,6 +32,13 @@ class CallgrindConverter(pyprof2calltree.CalltreeConverter):
 
 
 # 'top_blocks' can be None (then will not be rendered)
-def render(data_entries: List[Entry]):
+def render(data_entries: List[Entry], out_callgrind_path=None):
     converter = CallgrindConverter(data_entries)
-    converter.visualize()
+
+    if not out_callgrind_path:
+        converter.visualize()
+        return
+
+    with open(out_callgrind_path, "w", encoding="utf-8") as out_file:
+        converter.output(out_file)
+        converter.visualize()

@@ -133,14 +133,33 @@ def read_flame_blocks(data_file_path):
 
     top_event_tree = EventTree()
     bottom_event_tree = EventTree()
+    # trees_dict = {}
 
     for event in events_list:
         if event["ph"] != "X":
             continue
-        if event["tid"] < 1:
+
+        # thread_id = event["tid"]
+        # thread_tree = trees_dict.get(thread_id)
+        # if thread_tree is None:
+        #     thread_tree = EventTree()
+        #     trees_dict[thread_id] = thread_tree
+        # thread_tree.add_event(event)
+
+        ev_name = event.get("name")
+        if not ev_name.startswith("Total "):
             top_event_tree.add_event(event)
         else:
             bottom_event_tree.add_event(event)
+
+    # for key, val in trees_dict.items():
+    #     items = val.get_children()
+    #     print("xxxx:", key, len(items), items[0].event_data)
+    #
+    # all_entries = []
+    # for thread_tree in trees_dict.values():
+    #     entries = get_entries_from_tree(thread_tree, data_file_path)
+    #     all_entries.extend(entries)
 
     top_blocks = get_blocks_from_tree(top_event_tree, 0)
     bottom_blocks = get_blocks_from_tree(bottom_event_tree, 1)
@@ -151,6 +170,9 @@ def read_flame_blocks(data_file_path):
 
 
 def get_blocks_from_tree(event_tree, color):
+    if not event_tree:
+        return []
+
     blocks_list = []
 
     top_items = event_tree.get_children()
@@ -204,14 +226,14 @@ def read_events(trace_file_path):
 # =============================================================================
 
 
-def run_callgrind_view(files_list):
+def run_callgrind_view(files_list, out_callgrind_path):
     data_entries = []
     files_len = len(files_list)
     for idx, data_file in enumerate(files_list):
         _LOGGER.info("%s/%s: drawing callgrind view for %s", idx, files_len, data_file)
         entries = read_callgrind_enries(data_file)
         data_entries.extend(entries)
-    render_callgrind(data_entries)
+    render_callgrind(data_entries, out_callgrind_path)
 
 
 def read_callgrind_enries(data_file_path):
@@ -221,21 +243,26 @@ def read_callgrind_enries(data_file_path):
         return []
 
     top_event_tree = EventTree()
-    bottom_event_tree = EventTree()
+    # bottom_event_tree = EventTree()
 
     for event in events_list:
         if event["ph"] != "X":
             continue
-        if event["tid"] < 1:
-            top_event_tree.add_event(event)
-        else:
-            bottom_event_tree.add_event(event)
 
-    top_entries = get_entries_from_tree(top_event_tree, data_file_path)
-    return top_entries
+        ev_name = event.get("name")
+        if not ev_name.startswith("Total "):
+            top_event_tree.add_event(event)
+        # else:
+        #     bottom_event_tree.add_event(event)
+
+    entries = get_entries_from_tree(top_event_tree, data_file_path)
+    return entries
 
 
 def get_entries_from_tree(event_tree, data_file_path):
+    if not event_tree:
+        return []
+
     entries_list = []
     entries_dict = {}
 

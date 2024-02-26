@@ -60,7 +60,8 @@ def process_flamegraphs(args):
 
 def process_callgrind(args):
     files_list = find_files(args.files, args.dirs)
-    run_callgrind_view(files_list)
+    out_callgrind_path = args.outfile
+    run_callgrind_view(files_list, out_callgrind_path)
 
 
 # =============================================================
@@ -121,7 +122,7 @@ def main():
     subparser.set_defaults(func=process_flamegraph)
     subparser.add_argument("-la", "--logall", action="store_true", help="Log all messages")
     subparser.add_argument("-f", "--file", action="store", required=True, help="JSON file to analyze")
-    subparser.add_argument("--outfile", action="store", required=False, help="Path to output file")
+    subparser.add_argument("--outfile", action="store", required=True, help="Path to output file")
 
     ## =================================================
 
@@ -146,6 +147,7 @@ def main():
     subparser.add_argument(
         "-d", "--dirs", nargs="+", default=[], help="Directories to analyze (will recursively search for JSON files)"
     )
+    subparser.add_argument("--outfile", action="store", required=False, help="Path to output file")
 
     ## =================================================
 
