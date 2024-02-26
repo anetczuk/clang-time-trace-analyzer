@@ -41,6 +41,7 @@ Installation For development:
 - [time-trace: timeline / flame chart profiler for Clang](https://aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/)
 - [TECH : Clang Time Trace Feature](https://www.snsystems.com/technology/tech-blog/clang-time-trace-feature)
 - [The trace-event file format](https://github.com/catapult-project/catapult/wiki/Trace-Event-Format)
+- [Callgrind Format Specification](https://valgrind.org/docs/manual/cl-format.html)
 
 
 ## License

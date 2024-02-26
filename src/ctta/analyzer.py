@@ -13,7 +13,11 @@ from dataclasses import dataclass
 import re
 import json
 
-from ctta.flamegraph import render, BlockItem
+from ctta.eventree import EventTree
+from ctta.flamegraph import BlockItem
+from ctta.flamegraph import render as render_flamegraph
+from ctta.callgrind import render as render_callgrind
+from ctta.callgrind import Entry
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -115,68 +119,62 @@ class ExcludeItemFilter:
 
 
 def draw_flame_svg(files_list, out_svg_path):
+    _LOGGER.info("drawing flamegraph view")
     data_file = files_list[0]
     blocks, bblocks = read_flame_blocks(data_file)
-    render(blocks, bblocks, out_svg_path)
+    render_flamegraph(blocks, bblocks, out_svg_path)
 
 
 def read_flame_blocks(data_file_path):
-    top_blocks = []
-    bottom_blocks = []
-
     events_list = read_events(data_file_path)
     if not events_list:
         _LOGGER.warning("unable to get trace events from file: %s", data_file_path)
-        return top_blocks, bottom_blocks
+        return [], []
+
+    top_event_tree = EventTree()
+    bottom_event_tree = EventTree()
 
     for event in events_list:
         if event["ph"] != "X":
             continue
+        if event["tid"] < 1:
+            top_event_tree.add_event(event)
+        else:
+            bottom_event_tree.add_event(event)
 
-        item = BlockItem()
-        item.x = event["ts"]
-        item.w = event["dur"]
+    top_blocks = get_blocks_from_tree(top_event_tree, 0)
+    bottom_blocks = get_blocks_from_tree(bottom_event_tree, 1)
+
+    if not bottom_blocks:
+        return bottom_blocks, top_blocks
+    return top_blocks, bottom_blocks
+
+
+def get_blocks_from_tree(event_tree, color):
+    blocks_list = []
+
+    top_items = event_tree.get_children()
+    for item in top_items:
+        event = item.event_data
+
+        block = BlockItem()
+        block.x = event["ts"]
+        block.w = event["dur"]
+        block.level = item.level
+        block.color = color
 
         args = event.get("args", {})
         event_name = args.get("detail")
         if event_name is None:
             event_name = event.get("name")
 
-        item.name = os.path.basename(event_name)
-        item.full_name = event_name
-        item.hash_name = event_name
+        block.name = os.path.basename(event_name)
+        block.full_name = event_name
+        block.hash_name = event_name
 
-        if event["tid"] < 1:
-            top_blocks.append(item)
-        else:
-            item.color = 1
-            bottom_blocks.append(item)
+        blocks_list.append(block)
 
-    top_blocks.sort(key=lambda item: item.x)
-    bottom_blocks.sort(key=lambda item: item.x)
-
-    fill_block_level(top_blocks)
-    fill_block_level(bottom_blocks)
-
-    return top_blocks, bottom_blocks
-
-
-def fill_block_level(blocks_list):
-    for block in blocks_list:
-        middle = block.middle()
-        pointed_blocks = get_blocks(blocks_list, middle)
-        level = pointed_blocks.index(block)
-        block.level = level
-
-
-def get_blocks(blocks_list, pos):
-    ret_list = []
-    for item in blocks_list:
-        if item.is_in_block(pos):
-            ret_list.append(item)
-        if pos < item.x:
-            break
-    return ret_list
+    return blocks_list
 
 
 # event fields:
@@ -201,3 +199,90 @@ def read_events(trace_file_path):
 
     except json.decoder.JSONDecodeError:
         return None
+
+
+# =============================================================================
+
+
+def run_callgrind_view(files_list):
+    data_entries = []
+    files_len = len(files_list)
+    for idx, data_file in enumerate(files_list):
+        _LOGGER.info("%s/%s: drawing callgrind view for %s", idx, files_len, data_file)
+        entries = read_callgrind_enries(data_file)
+        data_entries.extend(entries)
+    render_callgrind(data_entries)
+
+
+def read_callgrind_enries(data_file_path):
+    events_list = read_events(data_file_path)
+    if not events_list:
+        _LOGGER.warning("unable to get trace events from file: %s", data_file_path)
+        return []
+
+    top_event_tree = EventTree()
+    bottom_event_tree = EventTree()
+
+    for event in events_list:
+        if event["ph"] != "X":
+            continue
+        if event["tid"] < 1:
+            top_event_tree.add_event(event)
+        else:
+            bottom_event_tree.add_event(event)
+
+    top_entries = get_entries_from_tree(top_event_tree, data_file_path)
+    return top_entries
+
+
+def get_entries_from_tree(event_tree, data_file_path):
+    entries_list = []
+    entries_dict = {}
+
+    top_items = event_tree.get_children()
+    for item in top_items:
+        entry = entries_dict.get(item)
+        if entry is None:
+            entry = get_entry_from_item(item, data_file_path)
+            entries_dict[item] = entry
+            entries_list.append(entry)
+
+        for child_item in item.children:
+            child_entry = entries_dict.get(child_item)
+            if child_entry is None:
+                child_entry = get_entry_from_item(child_item, data_file_path)
+                entries_dict[child_item] = child_entry
+                entries_list.append(child_entry)
+            entry.calls.append(child_entry)
+
+    return entries_list
+
+
+def get_entry_from_item(item, data_file_path):
+    event = item.event_data
+
+    args = event.get("args", {})
+    event_name = args.get("detail")
+    if event_name is None:
+        event_name = event.get("name")
+
+    if event_name == "ExecuteCompiler":
+        event_name = data_file_path
+    elif event_name in ["Frontend", "Backend", "CodeGenPasses", "PerformPendingInstantiations", "PerModulePasses"]:
+        event_name = f"{data_file_path}:{event_name}"
+
+    # short_name = os.path.basename(event_name)
+    # code = Code(event_name, 0, short_name)
+    code = event_name
+
+    children_dur = 0
+    for child in item.children:
+        child_event = child.event_data
+        children_dur += float(child_event["dur"])
+
+    duration = float(event["dur"]) / 1000000  # convert to seconds
+    children_dur = float(children_dur) / 1000000  # convert to seconds
+    self_dur = duration - children_dur
+    entry = Entry(code, 1, 1, self_dur, duration, [])
+
+    return entry
