@@ -37,40 +37,75 @@ class TreeItemContainer:
         if not self.children:
             self._append(item)
             return
+        self._add_cover(item)
+        self._add_side(item)
+
+    def _add_cover(self, item):
+        if not self.children:
+            return
 
         # check cover
+        item_start = item.start()
+        item_end = item.end()
+
+        if item_end < self.children[0].start():
+            # before first
+            return
+        if item_start > self.children[-1].end():
+            # after last
+            return
+
         idx = 0
         while idx < len(self.children):
             child = self.children[idx]
-            if item.start() <= child.start():
-                if item.end() >= child.end():
+            if item_start <= child.start():
+                if item_end >= child.end():
                     # fully covers
                     del self.children[idx]
                     item.add_item(child)
                 else:
+                    if item_end < child.start():
+                        break
                     idx += 1
             else:
                 idx += 1
 
+    def _add_side(self, item):
+        if not self.children:
+            self._append(item)
+            return
+
         # add item
+        item_start = item.start()
+        item_end = item.end()
+
+        if item_end < self.children[0].start():
+            # before first
+            self._insert(0, item)
+            return
+        if item_start > self.children[-1].end():
+            # after last
+            self._append(item)
+            return
+
         for idx, child in enumerate(self.children):
-            if item.end() <= child.end():
-                if item.start() >= child.start():
+            if item_end <= child.end():
+                if item_start >= child.start():
                     # insert inside current item
                     child.add_item(item)
                     return
-                if item.end() <= child.start():
+                if item_end <= child.start():
                     # fully before
                     self._insert(idx, item)
                     return
                 # partially before - invalid case
                 raise RuntimeError("invalid case")
 
-            if item.start() <= child.start():
+            if item_start <= child.start():
                 # fully covers - case already handled
                 raise RuntimeError("invalid case")
 
-            if item.start() < child.end():
+            if item_start < child.end():
                 # partially after
                 raise RuntimeError("invalid case")
 
@@ -94,15 +129,17 @@ class TreeItem(TreeItemContainer):
     def __init__(self, event_data):
         super().__init__()
         self.event_data = event_data
+        self._start = self.event_data["ts"]
+        self._end = self.event_data["ts"] + self.event_data["dur"]
 
     def __repr__(self) -> str:
         return f"[{id(self)} l: {self.level} s: {self.start()} e: {self.end()}]"
 
     def start(self):
-        return self.event_data["ts"]
+        return self._start
 
     def end(self):
-        return self.event_data["ts"] + self.event_data["dur"]
+        return self._end
 
     def middle(self):
         return self.event_data["ts"] + float(self.event_data["dur"]) / 2
