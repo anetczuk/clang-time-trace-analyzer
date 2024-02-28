@@ -3,10 +3,29 @@
 Analyze clang time-trace JSONs. Application iterates through files and directories for time-trace JSONs to concatenate 
 them in one output.
 
+Features:
+- generation of flame graph from single JSON file
+- viewing multiple JSON files at once in *KCachegrind*
+
+
+## Examples
+
+Example output of `analyze` tool: [sorted files](examples/tikz/out/compile_data.txt).
+
+Example output of `flamegraph` tool:
+[![flamegraph example](examples/tikz/out/flamegraph_svg-small.png "flamegraph example")](examples/tikz/out/flamegraph_svg.png)
+
+After running `callgrind` tool *KCachegrind* will be used to present results. Example view can be seen in following screen:
+[![KCachegrind example](examples/tikz/out/kcachegrind_screen-small.png "KCachegrind example")](examples/tikz/out/kcachegrind_screen.png)
+
 
 ## Running application
 
 To run application execute `python3 -m ctta --help` to receive [cmd help](doc/cmdargs.md).
+
+Showing multiple files placed in pointed directory in KCachegrind:
+
+`python3 -m ctta callgrind -d /path/to/build/dir`
 
 
 ## Instrumenting clang compiler
@@ -32,8 +51,9 @@ Installation For development:
 
 ## Similar projects
 
-- [speedscope](https://github.com/jlfwong/speedscope)
 - [ClangBuildAnalyzer](https://github.com/aras-p/ClangBuildAnalyzer)
+- [speedscope](https://github.com/jlfwong/speedscope)
+- [crofiler](https://github.com/HadrienG2/crofiler/)
 
 
 ## References

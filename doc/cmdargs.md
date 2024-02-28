@@ -49,7 +49,7 @@ optional arguments:
 
 ## <a name="flamegraph_help"></a> python3 -m ctta flamegraph --help
 ```
-usage: __main__.py flamegraph [-h] [-la] -f FILE [--outfile OUTFILE]
+usage: __main__.py flamegraph [-h] [-la] -f FILE --outfile OUTFILE
 
 draw JSON file as flame graph
 
@@ -84,7 +84,7 @@ optional arguments:
 ## <a name="callgrind_help"></a> python3 -m ctta callgrind --help
 ```
 usage: __main__.py callgrind [-h] [-la] [-f FILES [FILES ...]]
-                             [-d DIRS [DIRS ...]]
+                             [-d DIRS [DIRS ...]] [--outfile OUTFILE]
 
 display JSON files in kcachegrind viewer
 
@@ -96,4 +96,5 @@ optional arguments:
   -d DIRS [DIRS ...], --dirs DIRS [DIRS ...]
                         Directories to analyze (will recursively search for
                         JSON files)
+  --outfile OUTFILE     Path to output file
 ```
